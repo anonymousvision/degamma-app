@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DEGAMMA MATHS</title>
+<meta name="theme-color" content="#103247">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#153F57;--deep:#103247;--gold:#D5B875;--gold2:#E8D4A0;
+  --white:#fff;--bg:#F3F5F7;--tp:#172B3A;--ts:#718096;--tm:#9BADBF;
+  --bd:rgba(21,63,87,0.11);--bdg:rgba(213,184,117,0.32);
+  --surf:#fff;--surf2:#FAFBFC;
+  --sh:0 2px 16px rgba(21,63,87,0.09),0 1px 3px rgba(21,63,87,0.06);
+  --r:10px;--rl:14px;
+}
+[data-dark]{
+  --bg:#0D2535;--tp:#EDF2F7;--ts:#90B4C8;--tm:#5A7A8E;
+  --bd:rgba(255,255,255,0.08);--bdg:rgba(213,184,117,0.22);
+  --surf:#132334;--surf2:#1A2F42;--sh:0 2px 14px rgba(0,0,0,0.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--tp);overflow:hidden}
+button{font-family:'Inter',sans-serif;cursor:pointer}
+
+/* MathJax override — make it match brand */
+mjx-container{color:inherit!important;font-size:1em}
+
+/* ═══ SPLASH ═══ */
+#splash{
+  position:fixed;inset:0;z-index:999;background:var(--deep);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.s-rings{position:absolute;width:420px;height:420px;display:flex;align-items:center;justify-content:center}
+.s-ring{position:absolute;border-radius:50%;border:1px solid rgba(213,184,117,0.15);animation:rpulse 2.6s ease-in-out infinite}
+.s-ring:nth-child(1){width:160px;height:160px}
+.s-ring:nth-child(2){width:260px;height:260px;animation-delay:.35s;border-color:rgba(213,184,117,0.08)}
+.s-ring:nth-child(3){width:360px;height:360px;animation-delay:.7s;border-color:rgba(213,184,117,0.04)}
+@keyframes rpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.5}}
+
+.s-logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;animation:logoIn .9s cubic-bezier(.34,1.56,.64,1) .3s both}
+@keyframes logoIn{from{transform:scale(.4) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.s-logo{width:92px;height:92px;border-radius:20px;box-shadow:0 0 0 1px rgba(213,184,117,.3),0 20px 60px rgba(0,0,0,.5);animation:glow 2.2s ease-in-out 1.2s infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 1px rgba(213,184,117,.3),0 20px 60px rgba(0,0,0,.5)}to{box-shadow:0 0 0 2px rgba(213,184,117,.55),0 20px 60px rgba(0,0,0,.5),0 0 60px rgba(213,184,117,.18)}}
+.s-name{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:.08em;margin-top:20px;animation:fadeUp .7s ease .9s both}
+.s-sub{font-size:11px;font-weight:500;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-top:5px;animation:fadeUp .7s ease 1.1s both}
+.s-tagline{font-size:13px;color:rgba(255,255,255,.35);margin-top:12px;font-style:italic;font-family:'Playfair Display',serif;animation:fadeUp .7s ease 1.3s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Floating LaTeX symbols on splash */
+.mf{position:absolute;color:rgba(213,184,117,.13);font-family:'Playfair Display',serif;animation:mdrift linear infinite;pointer-events:none;user-select:none}
+@keyframes mdrift{0%{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:.2}100%{transform:translateY(-10vh) rotate(180deg);opacity:0}}
+
+.s-bar-wrap{margin-top:52px;width:160px;animation:fadeUp .5s ease 1.5s both}
+.s-track{height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.s-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width .08s linear}
+.s-msg{font-size:10px;color:rgba(255,255,255,.3);text-align:center;letter-spacing:.1em;margin-top:8px}
+
+/* Splash LaTeX formula preview */
+.s-formula-row{display:flex;gap:24px;margin-top:32px;animation:fadeUp .6s ease 1.7s both;flex-wrap:wrap;justify-content:center;max-width:380px}
+.s-formula{background:rgba(255,255,255,.04);border:1px solid rgba(213,184,117,.14);border-radius:8px;padding:8px 16px;color:rgba(255,255,255,.55);font-size:13px}
+
+.splash-exit{animation:splashOut .6s cubic-bezier(.4,0,.2,1) forwards!important}
+@keyframes splashOut{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
+
+/* ═══ APP ═══ */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;transition:opacity .5s ease}
+#app.visible{opacity:1}
+
+/* NAV */
+.nav{background:var(--deep);height:56px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(213,184,117,.15);flex-shrink:0;z-index:50;position:relative}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo img{height:30px;width:30px;border-radius:6px;object-fit:cover;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.nav-logo img:hover{transform:scale(1.12) rotate(-4deg)}
+.nb-name{font-family:'Playfair Display',serif;font-size:14.5px;font-weight:600;color:#fff;letter-spacing:.04em}
+.nb-sub{font-size:9px;font-weight:500;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin-top:1px}
+.nav-links{display:flex;gap:2px;margin-left:24px;list-style:none}
+.nav-links a{color:rgba(255,255,255,.58);font-size:12.5px;padding:5px 11px;border-radius:6px;text-decoration:none;transition:all .15s;cursor:pointer}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-links a.active{color:var(--gold);font-weight:500}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.65);transition:all .15s}
+.icon-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#B8942E);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--deep);border:1.5px solid rgba(213,184,117,.5);cursor:pointer;transition:transform .2s}
+.nav-avatar:hover{transform:scale(1.08)}
+
+/* ═══ SCREENS ═══ */
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .32s ease,transform .32s cubic-bezier(.4,0,.2,1);transform:translateX(28px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.exit-left{opacity:0;transform:translateX(-28px)}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px 26px;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+
+/* BOTTOM NAV */
+.bnav{display:none;background:var(--surf);border-top:1px solid var(--bd);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bnav-inner{display:flex;height:54px}
+.bi{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--tm);font-size:9.5px;font-weight:500;border:none;background:none;transition:color .15s;position:relative}
+.bi svg{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.bi.active{color:var(--gold)}
+.bi.active svg{transform:translateY(-2px) scale(1.1)}
+.bidot{position:absolute;top:8px;right:calc(50% - 18px);width:6px;height:6px;background:#E05252;border-radius:50%;border:1.5px solid var(--surf)}
+
+@media(max-width:768px){
+  .nav-links,.sidebar{display:none!important}
+  .bnav{display:block}
+  .scroll{padding:14px}
+}
+
+/* ═══ LOGIN ═══ */
+#scr-login{background:var(--deep);overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.lw{width:100%;max-width:390px;animation:loginIn .6s cubic-bezier(.34,1.4,.64,1) .1s both}
+@keyframes loginIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.ll{display:flex;flex-direction:column;align-items:center;margin-bottom:30px}
+.ll img{width:68px;height:68px;border-radius:14px;box-shadow:0 0 0 1px rgba(213,184,117,.3),0 12px 40px rgba(0,0,0,.5);animation:glow 2.2s ease-in-out infinite alternate;margin-bottom:12px}
+.ll-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:.04em;margin-bottom:3px}
+.ll-sub{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.lcard{background:rgba(255,255,255,.05);border:1px solid rgba(213,184,117,.18);border-radius:14px;padding:26px 22px;backdrop-filter:blur(10px)}
+.ltabs{display:flex;background:rgba(255,255,255,.06);border-radius:7px;padding:3px;margin-bottom:22px}
+.ltab{flex:1;padding:8px;border-radius:5px;border:none;background:transparent;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:500;transition:all .2s}
+.ltab.active{background:rgba(213,184,117,.18);color:var(--gold)}
+.fg{margin-bottom:14px}
+.fl{font-size:11px;color:rgba(255,255,255,.45);font-weight:500;letter-spacing:.04em;margin-bottom:6px;display:block}
+.fi{width:100%;padding:10px 13px;border-radius:7px;font-size:13.5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;outline:none;transition:all .15s;font-family:'Inter',sans-serif}
+.fi::placeholder{color:rgba(255,255,255,.22)}
+.fi:focus{border-color:rgba(213,184,117,.5);background:rgba(255,255,255,.1)}
+.fi option{background:#103247;color:#fff}
+.btn-p{width:100%;padding:12px;border-radius:8px;border:none;background:var(--gold);color:var(--deep);font-size:13.5px;font-weight:700;letter-spacing:.02em;margin-top:6px;transition:all .2s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
+.btn-p:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(213,184,117,.3)}
+.btn-p:active{transform:scale(.98)}
+.ldiv{display:flex;align-items:center;gap:10px;margin:14px 0}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+.ldiv span{font-size:10.5px;color:rgba(255,255,255,.28)}
+.btn-g{width:100%;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);font-size:12.5px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .15s}
+.btn-g:hover{background:rgba(255,255,255,.07);color:#fff}
+.lfooter{text-align:center;margin-top:18px;font-size:11.5px;color:rgba(255,255,255,.28)}
+.lfooter span{color:var(--gold);cursor:pointer;font-weight:500}
+.forgot{font-size:11.5px;color:rgba(213,184,117,.65);text-align:right;margin-bottom:5px;cursor:pointer}
+.forgot:hover{color:var(--gold)}
+
+/* ═══ LAYOUT ═══ */
+.layout{display:flex;flex:1;min-height:0;overflow:hidden}
+.sidebar{width:200px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow-y:auto;padding:14px 0}
+.sl{font-size:9px;font-weight:600;color:var(--tm);letter-spacing:.12em;text-transform:uppercase;padding:9px 16px 5px}
+.si{display:flex;align-items:center;gap:9px;padding:8px 16px;color:var(--ts);font-size:12.5px;border-left:2.5px solid transparent;transition:all .14s;cursor:pointer}
+.si:hover{color:var(--tp);background:rgba(21,63,87,.03)}
+.si.active{color:var(--navy);font-weight:500;border-left-color:var(--gold);background:rgba(213,184,117,.07)}
+[data-dark] .si.active{color:#90B4C8}
+.si svg{opacity:.7;flex-shrink:0}
+.si.active svg{opacity:1;color:var(--gold)}
+.sbadge{margin-left:auto;background:var(--navy);color:#fff;font-size:9.5px;padding:1px 6px;border-radius:8px;font-weight:600}
+.sdiv{height:1px;background:var(--bd);margin:7px 0}
+.exbox{margin:10px 11px 0;background:var(--deep);border-radius:10px;padding:11px}
+.exlbl{font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:7px}
+.exrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.exname{font-size:11px;color:rgba(255,255,255,.65)}
+.exdays{font-family:'Playfair Display',serif;font-size:13.5px;font-weight:700;color:#fff}
+.exunit{font-size:9px;color:rgba(255,255,255,.38)}
+.ebar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:5px;overflow:hidden}
+.efill{height:100%;background:var(--gold);border-radius:2px}
+
+/* ═══ CARDS & GRID ═══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--surf);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;transition:box-shadow .2s}
+.card:hover{box-shadow:var(--sh)}
+.chd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 11px;border-bottom:1px solid var(--bd)}
+.ct{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--tp);letter-spacing:-.01em}
+.ca{font-size:11.5px;color:var(--gold);font-weight:500;border:1px solid var(--bdg);padding:3px 9px;border-radius:5px;background:rgba(213,184,117,.06);cursor:pointer;transition:background .15s}
+.ca:hover{background:rgba(213,184,117,.14)}
+.cb{padding:14px 16px}
+
+/* ═══ STAT CARDS ═══ */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+@media(max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;animation:cIn .5s ease both}
+.sc:nth-child(1){animation-delay:.08s}.sc:nth-child(2){animation-delay:.16s}.sc:nth-child(3){animation-delay:.24s}.sc:nth-child(4){animation-delay:.32s}
+@keyframes cIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.sc:hover::before{transform:scaleX(1)}
+.sl2{font-size:10.5px;color:var(--tm);margin-bottom:6px}
+.sv{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--tp);line-height:1;margin-bottom:4px}
+.sd{font-size:11px;font-weight:500;color:#2D9B6B}
+.sd.red{color:#D94F4F}
+.si2{position:absolute;top:11px;right:11px;width:28px;height:28px;border-radius:6px;background:rgba(21,63,87,.07);display:flex;align-items:center;justify-content:center}
+[data-dark] .si2{background:rgba(255,255,255,.07)}
+
+/* GREETING */
+.grow{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.gey{font-size:11px;color:var(--gold);font-weight:500;margin-bottom:4px}
+.gn{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--tp);margin-bottom:3px}
+.gs{font-size:13px;color:var(--ts)}
+.streak{display:flex;align-items:center;gap:9px;background:var(--surf);border:1px solid var(--bdg);border-radius:11px;padding:9px 14px;flex-shrink:0;animation:bIn .5s cubic-bezier(.34,1.56,.64,1) .4s both}
+@keyframes bIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.snum{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);line-height:1}
+.slbl{font-size:10px;color:var(--tm);margin-top:2px}
+
+/* ═══ LATEX FORMULA CARDS ═══ */
+.formula-section{margin-bottom:16px}
+.section-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--tp);margin-bottom:10px;letter-spacing:-.01em}
+
+.formula-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.formula-card{
+  background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);
+  padding:14px 16px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  animation:cIn .4s ease both;
+}
+.formula-card:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:var(--bdg)}
+.formula-card:active{transform:scale(.98)}
+.fc-topic{font-size:10px;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.fc-name{font-size:12.5px;font-weight:500;color:var(--tp);margin-bottom:10px}
+.fc-formula{
+  background:var(--bg);border:1px solid var(--bd);border-radius:7px;
+  padding:10px 12px;text-align:center;min-height:48px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.formula-card:hover .fc-formula{background:rgba(213,184,117,.06);border-color:var(--bdg)}
+.fc-tag{display:inline-block;margin-top:9px;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500}
+.tag-imp{background:rgba(213,184,117,.12);color:#8B6914;border:1px solid var(--bdg)}
+[data-dark] .tag-imp{color:var(--gold)}
+.tag-adv{background:rgba(21,63,87,.08);color:var(--navy);border:1px solid rgba(21,63,87,.15)}
+[data-dark] .tag-adv{color:#90B4C8;background:rgba(144,180,200,.08);border-color:rgba(144,180,200,.2)}
+
+/* FORMULA DETAIL MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(16,50,71,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surf);border-radius:16px;width:100%;max-width:520px;border:1px solid var(--bd);box-shadow:0 24px 60px rgba(0,0,0,.2);animation:modalIn .3s cubic-bezier(.34,1.4,.64,1) both}
+@keyframes modalIn{from{transform:scale(.9) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--bd)}
+.modal-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--tp)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--tm);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:rgba(217,79,79,.1);border-color:rgba(217,79,79,.3);color:#D94F4F}
+.modal-body{padding:20px}
+.modal-formula-box{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px;min-height:72px;display:flex;align-items:center;justify-content:center;font-size:1.1em}
+.modal-desc{font-size:13.5px;color:var(--ts);line-height:1.75;margin-bottom:14px}
+.modal-vars{display:flex;flex-direction:column;gap:7px}
+.modal-var{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:7px}
+.mv-sym{font-size:.9em;min-width:60px;text-align:center;background:rgba(213,184,117,.08);border:1px solid var(--bdg);border-radius:5px;padding:4px 8px}
+.mv-def{font-size:12.5px;color:var(--ts)}
+
+/* PRACTICE QUESTION */
+.pq-card{background:var(--surf);border:1px solid var(--bd);border-radius:var(--rl);margin-bottom:14px;overflow:hidden;transition:all .2s}
+.pq-card:hover{box-shadow:var(--sh)}
+.pq-hd{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.pq-num{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--gold);width:28px}
+.pq-topic{font-size:11px;color:var(--tm);font-weight:500}
+.pq-diff{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;margin-left:auto}
+.diff-e{background:rgba(45,155,107,.1);color:#1E7A52;border:1px solid rgba(45,155,107,.2)}
+.diff-m{background:rgba(213,184,117,.1);color:#8B6914;border:1px solid var(--bdg)}
+.diff-h{background:rgba(217,79,79,.1);color:#A03030;border:1px solid rgba(217,79,79,.2)}
+[data-dark] .diff-e{color:#7BE0B2;background:rgba(123,224,178,.07)}
+[data-dark] .diff-m{color:var(--gold)}
+[data-dark] .diff-h{color:#F09595;background:rgba(240,149,149,.07)}
+.pq-body{padding:14px 16px}
+.pq-stem{font-size:14px;color:var(--tp);margin-bottom:12px;line-height:1.75}
+.choices{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.choice{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:9px 13px;font-size:13px;color:var(--tp);text-align:left;transition:all .15s;cursor:pointer;line-height:1.6}
+.choice:hover{border-color:var(--bdg);background:rgba(213,184,117,.06)}
+.choice.sel{border-color:var(--gold);background:rgba(213,184,117,.1)}
+.choice.ok{border-color:#2D9B6B;background:rgba(45,155,107,.08);color:var(--tp)}
+.choice.wrong{border-color:#D94F4F;background:rgba(217,79,79,.08)}
+.cl{width:20px;height:20px;border-radius:4px;background:rgba(21,63,87,.07);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--tm);flex-shrink:0}
+[data-dark] .cl{background:rgba(255,255,255,.07)}
+.pq-solution{display:none;background:rgba(45,155,107,.06);border:1px solid rgba(45,155,107,.2);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ts);line-height:1.75;margin-top:10px}
+.pq-solution.show{display:block}
+.pq-btn-row{display:flex;gap:8px;margin-top:10px}
+.btn-check{padding:9px 18px;border-radius:7px;border:none;background:var(--gold);color:var(--deep);font-size:12.5px;font-weight:700;transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+.btn-check:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-sol{padding:9px 18px;border-radius:7px;border:1px solid var(--bd);background:transparent;color:var(--ts);font-size:12.5px;font-weight:500;transition:all .15s}
+.btn-sol:hover{background:var(--bg);color:var(--tp)}
+
+/* CHALLENGE */
+.chal-card{background:var(--deep)!important;border-color:rgba(213,184,117,.18)!important}
+.ctopic{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px}
+.cq{font-family:'Playfair Display',serif;font-size:15px;font-weight:500;color:#fff;line-height:1.65;margin-bottom:12px}
+.cq-formula{background:rgba(255,255,255,.05);border:1px solid rgba(213,184,117,.18);border-radius:8px;padding:12px;text-align:center;margin-bottom:12px;color:rgba(255,255,255,.9)}
+.cchoice{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:9px 13px;color:rgba(255,255,255,.75);font-size:13px;text-align:left;transition:all .15s;cursor:pointer;line-height:1.6;width:100%;margin-bottom:7px}
+.cchoice:hover{background:rgba(213,184,117,.1);border-color:rgba(213,184,117,.3);color:#fff}
+.cchoice.sel{background:rgba(213,184,117,.16);border-color:var(--gold);color:#fff}
+.cchoice.ok{background:rgba(45,155,107,.15);border-color:#2D9B6B;color:#7BE0B2}
+.cchoice.wrong{background:rgba(217,79,79,.15);border-color:#D94F4F;color:#F09595}
+.cletter{width:20px;height:20px;border-radius:4px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);flex-shrink:0}
+.btn-ccheck{width:100%;padding:10px;border-radius:7px;border:none;background:var(--gold);color:var(--deep);font-size:13px;font-weight:700;transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+.btn-ccheck:hover{background:var(--gold2);transform:translateY(-1px)}
+
+/* LESSONS */
+.li{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bd);cursor:pointer;transition:padding .15s}
+.li:last-child{border-bottom:none}
+.li:hover{padding-left:4px}
+.lic{width:38px;height:38px;border-radius:8px;background:rgba(21,63,87,.07);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;font-family:'Playfair Display',serif;color:var(--navy)}
+[data-dark] .lic{background:rgba(255,255,255,.07)}
+.lin{font-size:13px;font-weight:500;color:var(--tp);margin-bottom:2px}
+.lim{font-size:11px;color:var(--tm)}
+.lbar{height:3px;background:var(--bd);border-radius:2px;margin-top:5px;overflow:hidden}
+.lfill{height:100%;background:var(--gold);border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.lpct{font-size:11px;font-weight:600;color:var(--gold);flex-shrink:0}
+
+/* PROGRESS */
+.pi{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.pi:last-child{border-bottom:none}
+.pnum{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--tm);width:20px;flex-shrink:0}
+.pname{font-size:12.5px;font-weight:500;color:var(--tp);margin-bottom:2px}
+.psub{font-size:10.5px;color:var(--tm)}
+.pbar{width:65px;height:4px;background:var(--bd);border-radius:2px;overflow:hidden;flex-shrink:0}
+.pfill{height:100%;border-radius:2px;transition:width 1.3s cubic-bezier(.4,0,.2,1)}
+.ppct{font-size:11px;font-weight:600;color:var(--ts);width:28px;text-align:right;flex-shrink:0}
+
+/* JEE */
+.jee-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.jbox{border-radius:9px;padding:13px;border:1px solid;overflow:hidden}
+.jbox-m{background:rgba(21,63,87,.05);border-color:rgba(21,63,87,.15)}
+.jbox-a{background:rgba(213,184,117,.05);border-color:var(--bdg)}
+[data-dark] .jbox-m{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1)}
+.jtag{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--navy);text-transform:uppercase;padding:3px 6px;border-radius:4px;background:rgba(21,63,87,.1);display:inline-block;margin-bottom:8px}
+.jtag-g{color:#8B6914;background:rgba(213,184,117,.18)}
+[data-dark] .jtag{color:#90B4C8;background:rgba(255,255,255,.08)}
+[data-dark] .jtag-g{color:var(--gold);background:rgba(213,184,117,.12)}
+.jscore{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--tp);line-height:1;margin-bottom:2px}
+.jsub{font-size:10px;color:var(--tm);margin-bottom:8px}
+.jbar{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:7px}
+.jfill{height:100%;border-radius:2px;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+.jpills{display:flex;gap:4px;flex-wrap:wrap}
+.jpill{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg);border:1px solid var(--bd);color:var(--ts)}
+
+/* TOAST */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--deep);color:#fff;padding:10px 18px;border-radius:9px;font-size:12.5px;font-weight:500;border:1px solid rgba(213,184,117,.3);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* PROFILE */
+.prof-hero{background:var(--deep);border-radius:var(--rl);padding:24px 20px;display:flex;align-items:center;gap:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.prof-hero::before{content:'∫  Σ  Δ';position:absolute;right:16px;bottom:8px;font-family:'Playfair Display',serif;font-size:40px;color:rgba(213,184,117,.07);letter-spacing:10px;pointer-events:none;user-select:none}
+.pav{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#B8942E);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--deep);border:2.5px solid rgba(213,184,117,.4);flex-shrink:0}
+.pname{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:3px}
+.psub2{font-size:11.5px;color:rgba(255,255,255,.4);margin-bottom:9px}
+.pbadges{display:flex;gap:6px;flex-wrap:wrap}
+.pbadge{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.1)}
+.pbadge-g{background:rgba(213,184,117,.18);color:var(--gold);border-color:rgba(213,184,117,.3)}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:var(--surf);border-bottom:1px solid var(--bd);transition:background .14s;cursor:pointer}
+.srow:first-child{border-radius:var(--r) var(--r) 0 0}
+.srow:last-child{border-radius:0 0 var(--r) var(--r);border-bottom:none}
+.srow:hover{background:var(--surf2)}
+.slabel{font-size:13px;color:var(--tp)}
+.sval{font-size:12.5px;color:var(--ts)}
+.toggle{width:34px;height:19px;border-radius:10px;background:var(--bd);position:relative;transition:background .2s;cursor:pointer;border:none;flex-shrink:0}
+.toggle.on{background:var(--gold)}
+.toggle::after{content:'';position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.toggle.on::after{transform:translateX(15px)}
+
+.btn-logout{width:100%;padding:11px;border-radius:8px;border:none;background:rgba(217,79,79,.12);color:#C53030;font-size:13px;font-weight:600;border:1px solid rgba(217,79,79,.2);transition:all .2s;margin-top:14px}
+.btn-logout:hover{background:rgba(217,79,79,.2)}
+
+/* PERF */
+.pminis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:11px}
+.pmini{text-align:center;padding:10px 6px;border-radius:7px;background:var(--bg);border:1px solid var(--bd)}
+.pminiv{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--tp);line-height:1;margin-bottom:3px}
+.pminil{font-size:10px;color:var(--tm)}
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH ═══ -->
+<div id="splash">
+  <div class="s-rings"><div class="s-ring"></div><div class="s-ring"></div><div class="s-ring"></div></div>
+  <div class="s-logo-wrap">
+    <img class="s-logo" id="splashLogo" alt="DEGAMMA">
+    <div class="s-name">DEGAMMA</div>
+    <div class="s-sub">Maths</div>
+    <div class="s-tagline">"Where equations meet elegance"</div>
+  </div>
+  <!-- LaTeX formulas shown on splash -->
+  <div class="s-formula-row">
+    <div class="s-formula" id="sf1"></div>
+    <div class="s-formula" id="sf2"></div>
+    <div class="s-formula" id="sf3"></div>
+  </div>
+  <div class="s-bar-wrap">
+    <div class="s-track"><div class="s-fill" id="sFill"></div></div>
+    <div class="s-msg" id="sMsg">Preparing your study environment…</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <nav class="nav" id="mainNav" style="display:none">
+    <div class="nav-logo">
+      <img id="navLogo" alt="DEGAMMA">
+      <div><div class="nb-name">Degamma</div><div class="nb-sub">Maths</div></div>
+    </div>
+    <ul class="nav-links">
+      <li><a class="active" onclick="goTo('dash',this)">Dashboard</a></li>
+      <li><a onclick="goTo('formulas',this)">Formulas</a></li>
+      <li><a onclick="goTo('practice',this)">Practice</a></li>
+      <li><a onclick="goTo('profile',this)">Profile</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="icon-btn" onclick="toggleDark()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <div class="nav-avatar" onclick="goTo('profile',null)">AK</div>
+    </div>
+  </nav>
+
+  <div class="screens" id="screens">
+
+    <!-- LOGIN -->
+    <div class="screen active" id="scr-login" style="background:var(--deep);overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:24px 16px">
+      <div class="lw">
+        <div class="ll">
+          <img id="loginLogo" alt="">
+          <div class="ll-name">DEGAMMA</div>
+          <div class="ll-sub">Maths · Excellence Platform</div>
+        </div>
+        <div class="lcard">
+          <div class="ltabs">
+            <button class="ltab active" onclick="switchTab('login')">Sign in</button>
+            <button class="ltab" onclick="switchTab('signup')">Create account</button>
+          </div>
+          <div id="loginForm">
+            <div class="fg"><label class="fl">Email address</label><input class="fi" type="email" placeholder="you@example.com"></div>
+            <div class="fg"><div class="forgot">Forgot password?</div><input class="fi" type="password" placeholder="Enter your password"></div>
+            <button class="btn-p" onclick="doLogin(event)">Sign in to DEGAMMA</button>
+            <div class="ldiv"><span>or</span></div>
+            <button class="btn-g" onclick="toast('Google sign-in coming soon!')">
+              <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Continue with Google
+            </button>
+          </div>
+          <div id="signupForm" style="display:none">
+            <div class="fg"><label class="fl">Full name</label><input class="fi" type="text" placeholder="Arjun Kumar"></div>
+            <div class="fg"><label class="fl">Email</label><input class="fi" type="email" placeholder="you@example.com"></div>
+            <div class="fg"><label class="fl">Target exam</label><select class="fi"><option>JEE Main 2027</option><option>JEE Advanced 2027</option><option>Both</option></select></div>
+            <div class="fg"><label class="fl">Password</label><input class="fi" type="password" placeholder="Create a password"></div>
+            <button class="btn-p" onclick="doLogin(event)">Create my account</button>
+          </div>
+        </div>
+        <div class="lfooter">By signing in you agree to our <span>Terms</span> & <span>Privacy Policy</span></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="screen" id="scr-dash">
+      <div class="layout">
+        <aside class="sidebar">
+          <span class="sl">Study</span>
+          <div class="si active" onclick="goTo('dash',null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+          <div class="si" onclick="goTo('formulas',null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Formula Bank<span class="sbadge">42</span></div>
+          <div class="si" onclick="goTo('practice',null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Practice<span class="sbadge">3</span></div>
+          <div class="sdiv"></div>
+          <span class="sl">Progress</span>
+          <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</div>
+          <div class="si" onclick="goTo('profile',null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</div>
+          <div class="exbox" style="margin-top:auto">
+            <div class="exlbl">Countdown</div>
+            <div class="exrow"><span class="exname">JEE Main</span><div><span class="exdays">72</span><span class="exunit"> d</span></div></div>
+            <div class="ebar"><div class="efill" style="width:62%"></div></div>
+            <div class="exrow"><span class="exname">JEE Advanced</span><div><span class="exdays">134</span><span class="exunit"> d</span></div></div>
+            <div class="ebar"><div class="efill" style="width:35%;background:rgba(255,255,255,.35)"></div></div>
+          </div>
+        </aside>
+        <div class="scroll">
+          <div class="grow">
+            <div>
+              <div class="gey">Thursday, 19 November 2026</div>
+              <h1 class="gn">Good morning, Arjun.</h1>
+              <p class="gs">You're 68% through Integral Calculus — keep going.</p>
+            </div>
+            <div class="streak"><span style="font-size:19px">🔥</span><div><div class="snum">14</div><div class="slbl">day streak</div></div></div>
+          </div>
+          <div class="stat-row">
+            <div class="sc"><div class="sl2">Problems solved</div><div class="sv" id="sv1">0</div><div class="sd">↑ 23 this week</div><div class="si2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div></div>
+            <div class="sc"><div class="sl2">Accuracy</div><div class="sv" id="sv2">0%</div><div class="sd">↑ 4% from last test</div><div class="si2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+            <div class="sc"><div class="sl2">JEE Main rank est.</div><div class="sv" id="sv3">0</div><div class="sd">↑ improved 310</div><div class="si2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div></div>
+            <div class="sc"><div class="sl2">Study today</div><div class="sv">2.4<span style="font-size:13px">h</span></div><div class="sd red">Goal: 4h remaining</div><div class="si2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+          </div>
+          <div class="g2">
+            <!-- DAILY CHALLENGE with LaTeX -->
+            <div class="card chal-card">
+              <div class="chd" style="border-bottom-color:rgba(213,184,117,.14)"><span class="ct" style="color:#fff">Daily Challenge</span><span class="ca" onclick="toast('Skipped!')">Skip</span></div>
+              <div class="cb">
+                <div class="ctopic">Definite Integration · Medium</div>
+                <div class="cq">Evaluate the integral:</div>
+                <div class="cq-formula" id="chalFormula"></div>
+                <div id="chalChoices">
+                  <button class="cchoice" onclick="pickC(this)"><span class="cletter">A</span><span id="cc0"></span></button>
+                  <button class="cchoice" onclick="pickC(this)"><span class="cletter">B</span><span id="cc1"></span></button>
+                  <button class="cchoice" onclick="pickC(this)"><span class="cletter">C</span><span id="cc2"></span></button>
+                  <button class="cchoice" onclick="pickC(this)"><span class="cletter">D</span><span id="cc3"></span></button>
+                </div>
+                <button class="btn-ccheck" id="cBtn" onclick="checkChal()">Check Answer</button>
+              </div>
+            </div>
+            <!-- CONTINUE LEARNING -->
+            <div class="card">
+              <div class="chd"><span class="ct">Continue learning</span><span class="ca">View all</span></div>
+              <div class="cb" style="padding-top:4px">
+                <div class="li"><div class="lic">∫</div><div style="flex:1"><div class="lin">Integration by Parts</div><div class="lim">Calculus · 12 left</div><div class="lbar"><div class="lfill" style="width:0%" data-to="68"></div></div></div><span class="lpct">68%</span></div>
+                <div class="li"><div class="lic">Σ</div><div style="flex:1"><div class="lin">Sequences & Series</div><div class="lim">Algebra · 8 left</div><div class="lbar"><div class="lfill" style="width:0%" data-to="45"></div></div></div><span class="lpct">45%</span></div>
+                <div class="li"><div class="lic">△</div><div style="flex:1"><div class="lin">Properties of Triangles</div><div class="lim">Trigonometry · 20 left</div><div class="lbar"><div class="lfill" style="width:0%" data-to="30"></div></div></div><span class="lpct">30%</span></div>
+                <div class="li"><div class="lic">P</div><div style="flex:1"><div class="lin">Permutations & Combinations</div><div class="lim">Just started</div><div class="lbar"><div class="lfill" style="width:0%" data-to="12"></div></div></div><span class="lpct">12%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="g2">
+            <!-- QUICK FORMULA PREVIEW -->
+            <div class="card">
+              <div class="chd"><span class="ct">Today's key formulas</span><span class="ca" onclick="goTo('formulas',null)">View all</span></div>
+              <div class="cb">
+                <div style="display:flex;flex-direction:column;gap:9px" id="dashFormulas"></div>
+              </div>
+            </div>
+            <!-- JEE + CHAPTERS -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card">
+                <div class="chd"><span class="ct">JEE readiness</span></div>
+                <div class="cb" style="padding-top:9px">
+                  <div class="jee-row">
+                    <div class="jbox jbox-m"><div class="jtag">JEE Main</div><div class="jscore">79<span style="font-size:13px;font-weight:400">%</span></div><div class="jsub">Readiness score</div><div class="jbar"><div class="jfill" style="width:0%;background:var(--navy)" data-to="79"></div></div><div class="jpills"><span class="jpill">Calculus ✓</span><span class="jpill">Algebra ✓</span></div></div>
+                    <div class="jbox jbox-a"><div class="jtag jtag-g">JEE Adv.</div><div class="jscore" style="color:var(--gold)">54<span style="font-size:13px;font-weight:400;color:var(--ts)">%</span></div><div class="jsub">Readiness score</div><div class="jbar"><div class="jfill" style="width:0%;background:var(--gold)" data-to="54"></div></div><div class="jpills"><span class="jpill">3D Geo</span><span class="jpill">P&C</span></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="chd"><span class="ct">Chapter progress</span><span class="ca">All</span></div>
+                <div class="cb" style="padding-top:4px">
+                  <div class="pi"><span class="pnum">01</span><div style="flex:1"><div class="pname">Differential Calculus</div><div class="psub">42/48</div></div><div class="pbar"><div class="pfill" style="width:0%;background:#2D9B6B" data-to="88"></div></div><span class="ppct">88%</span></div>
+                  <div class="pi"><span class="pnum">02</span><div style="flex:1"><div class="pname">Integral Calculus</div><div class="psub">33/52</div></div><div class="pbar"><div class="pfill" style="width:0%;background:var(--gold)" data-to="63"></div></div><span class="ppct">63%</span></div>
+                  <div class="pi"><span class="pnum">03</span><div style="flex:1"><div class="pname">Vectors & 3D Geo</div><div class="psub">18/44</div></div><div class="pbar"><div class="pfill" style="width:0%;background:var(--navy)" data-to="41"></div></div><span class="ppct">41%</span></div>
+                  <div class="pi"><span class="pnum">04</span><div style="flex:1"><div class="pname">Probability</div><div class="psub">9/38</div></div><div class="pbar"><div class="pfill" style="width:0%;background:#90B4C8" data-to="24"></div></div><span class="ppct">24%</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- PERF -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="chd"><span class="ct">Performance analytics</span><span class="ca">Full report</span></div>
+            <div class="cb">
+              <div class="pminis">
+                <div class="pmini"><div class="pminiv">91</div><div class="pminil">Last score</div></div>
+                <div class="pmini"><div class="pminiv">3.2m</div><div class="pminil">Avg / problem</div></div>
+                <div class="pmini"><div class="pminiv">12</div><div class="pminil">Tests / month</div></div>
+              </div>
+              <div style="height:130px"><canvas id="perfChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULA BANK -->
+    <div class="screen" id="scr-formulas">
+      <div class="scroll">
+        <div class="grow" style="margin-bottom:16px"><div><h1 class="gn">Formula Bank</h1><p class="gs">Tap any formula to see full details, derivation and examples</p></div></div>
+        <div class="formula-section">
+          <div class="section-title">Calculus</div>
+          <div class="formula-grid" id="calcGrid"></div>
+        </div>
+        <div class="formula-section">
+          <div class="section-title">Algebra & Sequences</div>
+          <div class="formula-grid" id="algGrid"></div>
+        </div>
+        <div class="formula-section">
+          <div class="section-title">Trigonometry</div>
+          <div class="formula-grid" id="trigGrid"></div>
+        </div>
+        <div class="formula-section">
+          <div class="section-title">Coordinate Geometry</div>
+          <div class="formula-grid" id="coordGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRACTICE -->
+    <div class="screen" id="scr-practice">
+      <div class="scroll">
+        <div class="grow" style="margin-bottom:16px"><div><h1 class="gn">Practice Questions</h1><p class="gs">JEE-level problems with full LaTeX solutions</p></div></div>
+        <div id="practiceList"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="scr-profile">
+      <div class="scroll">
+        <div class="prof-hero">
+          <div class="pav">AK</div>
+          <div>
+            <div class="pname">Arjun Kumar</div>
+            <div class="psub2">JEE 2027 Aspirant · Joined August 2025</div>
+            <div class="pbadges"><span class="pbadge pbadge-g">🔥 14-day streak</span><span class="pbadge">1,284 problems</span><span class="pbadge">Top 10% accuracy</span></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="section-title" style="margin-bottom:9px">Account</div>
+            <div>
+              <div class="srow"><span class="slabel">Full name</span><span class="sval">Arjun Kumar</span></div>
+              <div class="srow"><span class="slabel">Email</span><span class="sval">arjun@example.com</span></div>
+              <div class="srow"><span class="slabel">Target exam</span><span class="sval">JEE Advanced 2027</span></div>
+            </div>
+            <div class="section-title" style="margin:18px 0 9px">Preferences</div>
+            <div>
+              <div class="srow"><span class="slabel">Dark mode</span><button class="toggle" id="dmTog" onclick="toggleDark()"></button></div>
+              <div class="srow"><span class="slabel">Daily reminders</span><button class="toggle on"></button></div>
+              <div class="srow"><span class="slabel">Study goal</span><span class="sval" style="color:var(--gold)">4h / day</span></div>
+            </div>
+            <button class="btn-logout" onclick="doLogout()">Sign out</button>
+          </div>
+          <div>
+            <div class="section-title" style="margin-bottom:9px">Achievements</div>
+            <div class="card">
+              <div class="cb">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+                  <div style="text-align:center;padding:13px 7px;background:var(--bg);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:22px;margin-bottom:4px">🏆</div><div style="font-size:11px;font-weight:600;color:var(--tp)">Top Scorer</div><div style="font-size:10px;color:var(--tm)">Mock Test #1</div></div>
+                  <div style="text-align:center;padding:13px 7px;background:var(--bg);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:22px;margin-bottom:4px">⚡</div><div style="font-size:11px;font-weight:600;color:var(--tp)">Speed Solver</div><div style="font-size:10px;color:var(--tm)">Under 2 min avg</div></div>
+                  <div style="text-align:center;padding:13px 7px;background:var(--bg);border-radius:8px;border:1px solid var(--bdg)"><div style="font-size:22px;margin-bottom:4px">🔥</div><div style="font-size:11px;font-weight:600;color:var(--gold)">On Fire</div><div style="font-size:10px;color:var(--tm)">14-day streak</div></div>
+                  <div style="text-align:center;padding:13px 7px;background:var(--bg);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:22px;margin-bottom:4px">📚</div><div style="font-size:11px;font-weight:600;color:var(--tp)">Bookworm</div><div style="font-size:10px;color:var(--tm)">1000+ problems</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav" id="bNav" style="display:none">
+    <div class="bnav-inner">
+      <button class="bi active" id="bn-dash" onclick="goTo('dash',null);setBN('dash')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Home</button>
+      <button class="bi" id="bn-formulas" onclick="goTo('formulas',null);setBN('formulas')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Formulas<div class="bidot"></div></button>
+      <button class="bi" id="bn-practice" onclick="goTo('practice',null);setBN('practice')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Practice</button>
+      <button class="bi" id="bn-profile" onclick="goTo('profile',null);setBN('profile')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+    </div>
+  </nav>
+</div>
+
+<!-- FORMULA MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title" id="mTitle">Formula</span>
+      <button class="modal-close" onclick="closeModalBtn()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-formula-box" id="mFormula"></div>
+      <div class="modal-desc" id="mDesc"></div>
+      <div class="modal-vars" id="mVars"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ═══ DATA ═══
+const LOGO_B64 = "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";
+
+// FORMULA DATABASE
+const formulas = {
+  calc: [
+    {name:"Power Rule",topic:"Differentiation",latex:"\\frac{d}{dx}(x^n) = nx^{n-1}",desc:"The derivative of x raised to any power n equals n times x raised to (n−1).",vars:[["n","any real number"],["x","the variable"]],tag:"imp"},
+    {name:"Chain Rule",topic:"Differentiation",latex:"\\frac{d}{dx}[f(g(x))] = f'(g(x)) \\cdot g'(x)",desc:"When differentiating a composite function, multiply the derivative of the outer function by the derivative of the inner function.",vars:[["f","outer function"],["g","inner function"]],tag:"imp"},
+    {name:"Integration by Parts",topic:"Integration",latex:"\\int u\\,dv = uv - \\int v\\,du",desc:"Used when integrating a product of two functions. Choose u and dv using the ILATE rule.",vars:[["u","first function (algebraic/trig)"],["dv","second function differential"]],tag:"imp"},
+    {name:"Fundamental Theorem",topic:"Integration",latex:"\\int_a^b f(x)\\,dx = F(b) - F(a)",desc:"The definite integral of f(x) from a to b equals F(b) minus F(a), where F is any antiderivative of f.",vars:[["F(x)","antiderivative of f(x)"],["a, b","limits of integration"]],tag:"imp"},
+    {name:"Standard Integral",topic:"Integration",latex:"\\int x^n\\,dx = \\frac{x^{n+1}}{n+1} + C",desc:"The integral of x to the power n (where n ≠ −1) is x to the power (n+1) divided by (n+1), plus constant C.",vars:[["n","≠ −1"],["C","constant of integration"]],tag:""},
+    {name:"Limits — L'Hôpital",topic:"Limits",latex:"\\lim_{x \\to a}\\frac{f(x)}{g(x)} = \\lim_{x \\to a}\\frac{f'(x)}{g'(x)}",desc:"When a limit gives 0/0 or ∞/∞, differentiate numerator and denominator separately.",vars:[["f, g","differentiable functions"],["a","the limiting point"]],tag:"adv"},
+  ],
+  alg: [
+    {name:"Sum of AP",topic:"Sequences",latex:"S_n = \\frac{n}{2}(2a + (n-1)d)",desc:"Sum of first n terms of an Arithmetic Progression with first term a and common difference d.",vars:[["a","first term"],["d","common difference"],["n","number of terms"]],tag:"imp"},
+    {name:"Sum of GP",topic:"Sequences",latex:"S_n = \\frac{a(r^n - 1)}{r - 1},\\quad r \\neq 1",desc:"Sum of first n terms of a Geometric Progression with first term a and common ratio r.",vars:[["a","first term"],["r","common ratio (≠ 1)"]],tag:"imp"},
+    {name:"Binomial Theorem",topic:"Algebra",latex:"(x+y)^n = \\sum_{k=0}^{n} \\binom{n}{k} x^{n-k} y^k",desc:"Expands (x+y) raised to power n as a sum involving binomial coefficients.",vars:[["n","positive integer"],["k","summation index"]],tag:"imp"},
+    {name:"Quadratic Formula",topic:"Algebra",latex:"x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",desc:"Gives roots of any quadratic equation ax² + bx + c = 0 directly.",vars:[["a, b, c","coefficients"],["discriminant","b² − 4ac"]],tag:"imp"},
+  ],
+  trig: [
+    {name:"Pythagorean Identity",topic:"Trigonometry",latex:"\\sin^2\\theta + \\cos^2\\theta = 1",desc:"The fundamental trigonometric identity — always true for any angle θ.",vars:[["θ","any angle"]],tag:"imp"},
+    {name:"Double Angle — sin",topic:"Trigonometry",latex:"\\sin 2\\theta = 2\\sin\\theta\\cos\\theta",desc:"Expresses sin of double angle in terms of sin and cos of the original angle.",vars:[["θ","original angle"]],tag:"imp"},
+    {name:"Double Angle — cos",topic:"Trigonometry",latex:"\\cos 2\\theta = \\cos^2\\theta - \\sin^2\\theta",desc:"Expresses cosine of double angle. Can also be written as 2cos²θ − 1 or 1 − 2sin²θ.",vars:[["θ","original angle"]],tag:""},
+    {name:"Sum to Product",topic:"Trigonometry",latex:"\\sin A + \\sin B = 2\\sin\\!\\left(\\frac{A+B}{2}\\right)\\cos\\!\\left(\\frac{A-B}{2}\\right)",desc:"Converts sum of two sines into a product — useful for JEE problems.",vars:[["A, B","two angles"]],tag:"adv"},
+  ],
+  coord: [
+    {name:"Distance Formula",topic:"Coordinate Geometry",latex:"d = \\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}",desc:"Distance between two points (x₁,y₁) and (x₂,y₂) in a 2D plane.",vars:[["(x₁,y₁)","first point"],["(x₂,y₂)","second point"]],tag:"imp"},
+    {name:"Circle Equation",topic:"Coordinate Geometry",latex:"(x-h)^2 + (y-k)^2 = r^2",desc:"Standard form of a circle with centre (h,k) and radius r.",vars:[["(h,k)","centre"],["r","radius"]],tag:"imp"},
+    {name:"Parabola",topic:"Coordinate Geometry",latex:"y^2 = 4ax",desc:"Standard parabola opening rightward with focus at (a,0) and directrix x = −a.",vars:[["a","distance from vertex to focus"]],tag:""},
+  ]
+};
+
+// PRACTICE QUESTIONS
+const questions = [
+  {
+    num:1, topic:"Calculus — Integration", diff:"Medium",
+    stem:"Find the value of the integral:",
+    latex:"\\int_0^{\\pi} \\sin^2(x) \\cos(x)\\,dx",
+    choices:["0","\\dfrac{1}{3}","\\dfrac{2}{3}","\\dfrac{\\pi}{4}"],
+    ans:0,
+    solution:"We use the substitution \\(u = \\sin x,\\; du = \\cos x\\,dx\\). When \\(x=0\\), \\(u=0\\); when \\(x=\\pi\\), \\(u=0\\). Therefore the integral becomes \\(\\int_0^0 u^2\\,du = 0\\)."
+  },
+  {
+    num:2, topic:"Algebra — Sequences", diff:"Easy",
+    stem:"The sum of the first 10 terms of an AP with first term 3 and common difference 4 is:",
+    latex:"S_{10} = \\frac{10}{2}\\bigl(2(3) + (10-1)(4)\\bigr)",
+    choices:["180","210","150","240"],
+    ans:1,
+    solution:"Using \\(S_n = \\dfrac{n}{2}(2a + (n-1)d)\\): \\(S_{10} = \\dfrac{10}{2}(6 + 36) = 5 \\times 42 = 210\\)."
+  },
+  {
+    num:3, topic:"Trigonometry", diff:"Hard",
+    stem:"Simplify the expression:",
+    latex:"\\frac{\\sin 3\\theta + \\sin\\theta}{\\cos 3\\theta + \\cos\\theta}",
+    choices:["\\tan 2\\theta","\\cot 2\\theta","\\tan\\theta","\\sin 2\\theta"],
+    ans:0,
+    solution:"Apply sum-to-product: Numerator \\(= 2\\sin 2\\theta\\cos\\theta\\), Denominator \\(= 2\\cos 2\\theta\\cos\\theta\\). Dividing: \\(\\dfrac{2\\sin 2\\theta\\cos\\theta}{2\\cos 2\\theta\\cos\\theta} = \\tan 2\\theta\\)."
+  },
+  {
+    num:4, topic:"Differential Calculus", diff:"Medium",
+    stem:"If \\(f(x) = x^3 - 6x^2 + 9x + 1\\), find the value of \\(f'(x)\\) at \\(x = 2\\):",
+    latex:"f'(x) = 3x^2 - 12x + 9",
+    choices:["-3","3","0","9"],
+    ans:0,
+    solution:"\\(f'(x) = 3x^2 - 12x + 9\\). At \\(x = 2\\): \\(f'(2) = 3(4) - 24 + 9 = 12 - 24 + 9 = -3\\)."
+  },
+];
+
+// ═══ SPLASH SETUP ═══
+const splashMsgs = ['Loading formula engine…','Preparing LaTeX renderer…','Syncing your progress…','Almost ready!'];
+let msgIdx=0, loggedIn=false;
+
+function runSplash(){
+  // Set logo
+  document.getElementById('splashLogo').src = 'data:image/jpeg;base64,'+LOGO_B64;
+  document.getElementById('loginLogo').src = 'data:image/jpeg;base64,'+LOGO_B64;
+  document.getElementById('navLogo').src = 'data:image/jpeg;base64,'+LOGO_B64;
+
+  // Floating math symbols
+  const syms=['∫','Σ','Δ','π','∞','√','∂','θ','λ','≈','∴','⊂'];
+  syms.forEach((s,i)=>{
+    const el=document.createElement('div');
+    el.className='mf'; el.textContent=s;
+    el.style.cssText='left:'+(4+i*8.5)+'%;font-size:'+(18+Math.random()*18)+'px;animation-delay:'+(Math.random()*2)+'s;animation-duration:'+(4+Math.random()*3)+'s';
+    document.getElementById('splash').appendChild(el);
+  });
+
+  // Loading bar
+  const fill=document.getElementById('sFill'), msg=document.getElementById('sMsg');
+  let pct=0;
+  const iv=setInterval(()=>{
+    pct+=1.6;
+    fill.style.width=Math.min(pct,100)+'%';
+    if(pct%25<2 && msgIdx<splashMsgs.length) msg.textContent=splashMsgs[msgIdx++];
+    if(pct>=100){ clearInterval(iv); setTimeout(launchApp,300); }
+  },40);
+
+  // Typeset splash formulas after MathJax loads
+  setTimeout(()=>{
+    setMath('sf1','\\displaystyle\\int_a^b f(x)\\,dx');
+    setMath('sf2','\\displaystyle\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}');
+    setMath('sf3','e^{i\\pi}+1=0');
+  }, 800);
+}
+
+function launchApp(){
+  document.getElementById('splash').classList.add('splash-exit');
+  document.getElementById('app').style.opacity='1';
+  setTimeout(()=>document.getElementById('splash').style.display='none',600);
+}
+
+// ═══ MATHJAX HELPER ═══
+function setMath(elId, latex){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML='\\('+latex+'\\)';
+  if(window.MathJax) MathJax.typesetPromise([el]).catch(()=>{});
+}
+
+function setMathBlock(elId, latex){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML='\\['+latex+'\\]';
+  if(window.MathJax) MathJax.typesetPromise([el]).catch(()=>{});
+}
+
+// ═══ AUTH ═══
+function switchTab(t){
+  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
+  document.getElementById('signupForm').style.display=t==='signup'?'block':'none';
+  document.querySelectorAll('.ltab').forEach((b,i)=>b.classList.toggle('active',(t==='login'&&i===0)||(t==='signup'&&i===1)));
+}
+
+function doLogin(e){
+  const btn=e.target; btn.textContent='Signing in…'; btn.style.opacity='.75';
+  setTimeout(()=>{
+    loggedIn=true;
+    document.getElementById('mainNav').style.display='flex';
+    if(window.innerWidth<=768) document.getElementById('bNav').style.display='block';
+    goTo('dash',null);
+    setTimeout(()=>{ animateCounters(); animateBars(); buildFormulas(); buildPractice(); drawPerf(); },400);
+    setTimeout(()=>{ setDashFormulas(); setChallengeLatex(); },600);
+  },1000);
+}
+
+function doLogout(){
+  loggedIn=false;
+  document.getElementById('mainNav').style.display='none';
+  document.getElementById('bNav').style.display='none';
+  goTo('login',null); toast('Signed out');
+}
+
+// ═══ NAV ═══
+let cur='login';
+function goTo(name, lnk){
+  if(cur===name) return;
+  const prev=document.getElementById('scr-'+cur);
+  const next=document.getElementById('scr-'+name);
+  if(!next) return;
+  prev.classList.add('exit-left');
+  setTimeout(()=>prev.classList.remove('active','exit-left'),340);
+  setTimeout(()=>{ next.classList.add('active'); cur=name; },50);
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  if(lnk) lnk.classList.add('active');
+}
+function setBN(id){ document.querySelectorAll('.bi').forEach(b=>b.classList.remove('active')); document.getElementById('bn-'+id)?.classList.add('active'); }
+
+// ═══ DARK MODE ═══
+function toggleDark(){
+  document.documentElement.toggleAttribute('data-dark');
+  const on=document.documentElement.hasAttribute('data-dark');
+  document.getElementById('dmTog')?.classList.toggle('on',on);
+  setTimeout(drawPerf,50);
+}
+
+// ═══ TOAST ═══
+let tTimer;
+function toast(msg){ const t=document.getElementById('toastEl'); t.textContent=msg; t.classList.add('show'); clearTimeout(tTimer); tTimer=setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ═══ COUNTER ANIMATION ═══
+function animateCounters(){
+  animTo('sv1',0,1284,1200,v=>v.toLocaleString());
+  animTo('sv2',0,79,1000,v=>Math.round(v)+'%');
+  animTo('sv3',0,2840,1200,v=>v.toLocaleString());
+}
+function animTo(id,from,to,dur,fmt){
+  const el=document.getElementById(id); if(!el) return;
+  const start=performance.now();
+  (function step(now){ const p=Math.min((now-start)/dur,1); const e=1-Math.pow(1-p,3); el.textContent=fmt(Math.round(from+(to-from)*e)); if(p<1) requestAnimationFrame(step); })(performance.now());
+}
+function animateBars(){ setTimeout(()=>document.querySelectorAll('[data-to]').forEach(el=>el.style.width=el.dataset.to+'%'),300); }
+
+// ═══ DASHBOARD FORMULAS ═══
+function setDashFormulas(){
+  const data=[
+    {name:'Power Rule',latex:'\\dfrac{d}{dx}(x^n)=nx^{n-1}'},
+    {name:'Integration by Parts',latex:'\\int u\\,dv = uv - \\int v\\,du'},
+    {name:'Sum Formula (AP)',latex:'S_n=\\dfrac{n}{2}(2a+(n-1)d)'},
+  ];
+  const wrap=document.getElementById('dashFormulas');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  data.forEach(f=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:all .15s';
+    div.onmouseenter=()=>{div.style.borderColor='var(--bdg)';div.style.background='rgba(213,184,117,.06)'};
+    div.onmouseleave=()=>{div.style.borderColor='var(--bd)';div.style.background='var(--bg)'};
+    div.innerHTML='<div style="flex:1"><div style="font-size:11px;color:var(--tm);margin-bottom:4px">'+f.name+'</div><div id="df_'+f.name.replace(/\s/g,'_')+'"></div></div><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+    wrap.appendChild(div);
+    setTimeout(()=>setMath('df_'+f.name.replace(/\s/g,'_'), f.latex),100);
+  });
+}
+
+// ═══ CHALLENGE LaTeX ═══
+function setChallengeLatex(){
+  setMathBlock('chalFormula','\\int_0^{\\pi} \\sin^2(x)\\cdot\\cos(x)\\,dx');
+  setMath('cc0','0');
+  setMath('cc1','\\dfrac{1}{3}');
+  setMath('cc2','\\dfrac{2}{3}');
+  setMath('cc3','\\dfrac{\\pi}{4}');
+}
+let chalSel=null;
+function pickC(btn){ document.querySelectorAll('.cchoice').forEach(b=>b.classList.remove('sel','ok','wrong')); btn.classList.add('sel'); chalSel=btn; }
+function checkChal(){
+  if(!chalSel){toast('Pick an answer first!');return}
+  const btns=[...document.querySelectorAll('.cchoice')];
+  btns[0].classList.add('ok');
+  if(chalSel!==btns[0]) chalSel.classList.add('wrong');
+  else toast('✓ Correct! Well done.');
+  const btn=document.getElementById('cBtn');
+  btn.textContent='Answer: A — 0';
+  btn.style.background=chalSel===btns[0]?'#2D9B6B':'#E05252';
+  btn.style.color='#fff';
+}
+
+// ═══ FORMULA BANK ═══
+function buildFormulas(){
+  renderGrid('calcGrid',formulas.calc);
+  renderGrid('algGrid',formulas.alg);
+  renderGrid('trigGrid',formulas.trig);
+  renderGrid('coordGrid',formulas.coord);
+  setTimeout(()=>MathJax&&MathJax.typesetPromise(),300);
+}
+function renderGrid(id,list){
+  const g=document.getElementById(id); if(!g) return;
+  g.innerHTML='';
+  list.forEach((f,i)=>{
+    const card=document.createElement('div');
+    card.className='formula-card';
+    card.style.animationDelay=(i*.07)+'s';
+    card.onclick=()=>openModal(f);
+    card.innerHTML='<div class="fc-topic">'+f.topic+'</div><div class="fc-name">'+f.name+'</div><div class="fc-formula" id="ff_'+id+'_'+i+'"></div>'+(f.tag?'<span class="fc-tag '+(f.tag==='imp'?'tag-imp':'tag-adv')+'">'+(f.tag==='imp'?'★ Important':'Advanced')+'</span>':'');
+    g.appendChild(card);
+    setTimeout(()=>setMath('ff_'+id+'_'+i,f.latex),200+i*30);
+  });
+}
+
+// ═══ FORMULA MODAL ═══
+function openModal(f){
+  document.getElementById('mTitle').textContent=f.name;
+  document.getElementById('mDesc').textContent=f.desc;
+  setMathBlock('mFormula',f.latex);
+  const vars=document.getElementById('mVars');
+  vars.innerHTML='';
+  if(f.vars) f.vars.forEach(v=>{
+    const r=document.createElement('div'); r.className='modal-var';
+    r.innerHTML='<div class="mv-sym" id="mv_'+v[0].replace(/\s/g,'_')+'">\\('+v[0]+'\\)</div><div class="mv-def">'+v[1]+'</div>';
+    vars.appendChild(r);
+  });
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(()=>MathJax&&MathJax.typesetPromise([document.getElementById('modalBg')]),100);
+}
+function closeModal(e){ if(e.target===document.getElementById('modalBg')) closeModalBtn(); }
+function closeModalBtn(){ document.getElementById('modalBg').classList.remove('open'); }
+
+// ═══ PRACTICE ═══
+function buildPractice(){
+  const wrap=document.getElementById('practiceList'); if(!wrap) return;
+  wrap.innerHTML='';
+  questions.forEach((q,qi)=>{
+    const card=document.createElement('div'); card.className='pq-card';
+    const dclass=q.diff==='Easy'?'diff-e':q.diff==='Medium'?'diff-m':'diff-h';
+    card.innerHTML=`
+      <div class="pq-hd"><span class="pq-num">Q${q.num}</span><span class="pq-topic">${q.topic}</span><span class="pq-diff ${dclass}">${q.diff}</span></div>
+      <div class="pq-body">
+        <div class="pq-stem">${q.stem}</div>
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;text-align:center;margin-bottom:12px;min-height:52px;display:flex;align-items:center;justify-content:center" id="pf${qi}"></div>
+        <div class="choices" id="pc${qi}">
+          ${q.choices.map((c,ci)=>`<button class="choice" onclick="pickQ(this,${qi})"><span class="cl">${String.fromCharCode(65+ci)}</span><span id="pco${qi}_${ci}"></span></button>`).join('')}
+        </div>
+        <div class="pq-btn-row">
+          <button class="btn-check" onclick="checkQ(${qi},${q.ans})">Check Answer</button>
+          <button class="btn-sol" onclick="toggleSol(${qi})">Show Solution</button>
+        </div>
+        <div class="pq-solution" id="ps${qi}">
+          <strong style="color:var(--gold)">Solution:</strong><br><span id="pstext${qi}"></span>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+    setTimeout(()=>{
+      setMath('pf'+qi, q.latex);
+      q.choices.forEach((_,ci)=>setMath('pco'+qi+'_'+ci,'\\displaystyle '+q.choices[ci]));
+      setMath('pstext'+qi, q.solution);
+    },300+qi*80);
+  });
+}
+
+function pickQ(btn,qi){
+  document.querySelectorAll('#pc'+qi+' .choice').forEach(b=>b.classList.remove('sel','ok','wrong'));
+  btn.classList.add('sel');
+}
+function checkQ(qi,ans){
+  const btns=[...document.querySelectorAll('#pc'+qi+' .choice')];
+  const sel=btns.find(b=>b.classList.contains('sel'));
+  if(!sel){toast('Select an answer first!');return}
+  btns[ans].classList.add('ok');
+  if(sel!==btns[ans]) sel.classList.add('wrong');
+  else toast('✓ Correct!');
+}
+function toggleSol(qi){
+  const sol=document.getElementById('ps'+qi);
+  sol.classList.toggle('show');
+  MathJax&&MathJax.typesetPromise([sol]);
+}
+
+// ═══ PERF CHART ═══
+let perfChart;
+function getNavy(){ return document.documentElement.hasAttribute('data-dark')?'#1E5070':'#153F57'; }
+function getGrid(){ return document.documentElement.hasAttribute('data-dark')?'rgba(255,255,255,.05)':'rgba(21,63,87,.07)'; }
+function getTick(){ return document.documentElement.hasAttribute('data-dark')?'#90B4C8':'#718096'; }
+function drawPerf(){
+  const ctx=document.getElementById('perfChart'); if(!ctx) return;
+  if(perfChart) perfChart.destroy();
+  perfChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:['Aug','Sep','Oct','Nov'],datasets:[
+      {label:'Score',data:[61,70,78,91],borderColor:getNavy(),backgroundColor:'rgba(21,63,87,.12)',borderWidth:2,pointRadius:4,pointBackgroundColor:getNavy(),pointBorderColor:'#fff',pointBorderWidth:1.5,tension:.4,fill:true},
+      {label:'Accuracy',data:[58,65,73,79],borderColor:'#D5B875',borderWidth:1.5,pointRadius:3,pointBackgroundColor:'#D5B875',borderDash:[5,3],tension:.4,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:900},plugins:{legend:{display:true,position:'bottom',labels:{color:getTick(),font:{size:10},boxWidth:10,padding:10}},tooltip:{backgroundColor:'rgba(16,50,71,.95)',titleColor:'#D5B875',bodyColor:'#fff'}},scales:{x:{ticks:{color:getTick(),font:{size:10}},grid:{color:getGrid()},border:{color:getGrid()}},y:{ticks:{color:getTick(),font:{size:10}},grid:{color:getGrid()},border:{color:getGrid()},min:50,max:100}}}
+  });
+}
+
+// ═══ RESPONSIVE ═══
+window.addEventListener('resize',()=>{ if(loggedIn) document.getElementById('bNav').style.display=window.innerWidth<=768?'block':'none'; });
+window.addEventListener('DOMContentLoaded',()=>{ runSplash(); });
+</script>
+</body>
+</html>
